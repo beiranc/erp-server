@@ -1,0 +1,51 @@
+# 配置 debug 模式是否开启
+debug: false
+
+# 配置数据源及 JPA 相关
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://127.0.0.1:3306/erp-server?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  # 配置 Spring MVC 相关属性
+  mvc:
+    date-format: yyyy-MM-dd HH:mm:ss
+
+  # 配置 Jackson
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: NON_NULL
+    time-zone: GMT+8
+  # Redis 配置
+  redis:
+    host: 127.0.0.1
+    timeout: 5000
+
+# 配置服务器相关
+server:
+  port: 9001
+  compression:
+    enabled: true
+  forward-headers-strategy: FRAMEWORK
+
+# JWT 配置
+jwt:
+  # 密钥 KEY
+  secret: 7196371f9fa2480696c74b152732cac1
+  token-header: Authorization
+  token-prefix: ERP-
+  expiration: 86400
+  ant-matchers: /login,/swagger-ui.html,/swagger-resources/**,/v2/api-docs,/webjars/springfox-swagger-ui/**,/api/v1/auth/**,/webjars/**
+
+# 常用配置
+common:
+  login-url: /api/v1/auth/login
+  logout-url: /api/v1/auth/logout
+  api-version: /api/v1
+  kaptcha-name: kaptcha
+  code-key: codeKey
