@@ -180,6 +180,19 @@ public class ProductionController {
     }
 
     /**
+     * 获取所有生产需求计划
+     * @param pageable
+     * @return
+     */
+    @GetMapping
+    @LogRecord("获取所有生产需求计划")
+    @PreAuthorize("@erp.check('produce:view') and @erp.check('produceManager')")
+    @ApiOperation("获取所有生产需求计划")
+    public ResponseModel getAllProductions(@PageableDefault Pageable pageable) {
+        return ResponseModel.ok(productionService.getAllProductions(pageable));
+    }
+
+    /**
      * 通过用户名获取生产需求计划
      * @param userName
      * @param pageable

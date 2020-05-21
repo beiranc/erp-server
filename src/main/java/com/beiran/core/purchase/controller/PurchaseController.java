@@ -180,6 +180,19 @@ public class PurchaseController {
     }
 
     /**
+     * 查看所有采购计划
+     * @param pageable
+     * @return
+     */
+    @GetMapping
+    @LogRecord("查看所有采购计划")
+    @PreAuthorize("@erp.check('purchase:view') and @erp.check('purchaseManager')")
+    @ApiOperation("查看所有采购计划")
+    public ResponseModel getPurchases(@PageableDefault Pageable pageable) {
+        return ResponseModel.ok(purchaseService.getAllPurchases(pageable));
+    }
+
+    /**
      * 通过用户名查询采购计划
      * @param userName
      * @param pageable

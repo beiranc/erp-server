@@ -120,6 +120,13 @@ public interface ProductionService extends GenericService<ProductionDemand, Stri
     List<ProductionDto> getProductionsByModifiedTime(Date leftTime, Date rightTime, Pageable pageable);
 
     /**
+     * 获取所有的生产需求计划
+     * @param pageable 分页参数
+     * @return List<ProductionDto>
+     */
+    List<ProductionDto> getAllProductions(Pageable pageable);
+
+    /**
      * 导出指定用户的生产需求计划
      * @param userName 用户名
      * @param pageable 分页参数

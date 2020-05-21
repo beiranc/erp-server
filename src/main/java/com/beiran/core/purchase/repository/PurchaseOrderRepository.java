@@ -22,9 +22,9 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, St
      * @param purchaseState 采购计划状态
      * @return 是否修改成功
      */
-    @Modifying
-    @Query(value = "UPDATE erp_purchase_order SET purchase_state = ?2 WHERE purchaseId = ?1", nativeQuery = true)
-    int updateState(String purchaseId, PurchaseOrder.PurchaseOrderState purchaseState);
+//    @Modifying
+//    @Query(value = "UPDATE erp_purchase_order SET purchase_state = ?2 WHERE purchase_id = ?1", nativeQuery = true)
+//    int updateState(String purchaseId, PurchaseOrder.PurchaseOrderState purchaseState);
 
     /**
      * 根据用户名查询采购计划

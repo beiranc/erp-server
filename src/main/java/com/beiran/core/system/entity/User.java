@@ -1,5 +1,6 @@
 package com.beiran.core.system.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -48,6 +49,7 @@ public class User {
     /**
      * 登录密码，存入数据库前先加密
      */
+    @JsonIgnore
     private String userPassword;
 
     /**

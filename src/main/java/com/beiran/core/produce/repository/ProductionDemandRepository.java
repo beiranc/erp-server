@@ -22,9 +22,9 @@ public interface ProductionDemandRepository extends JpaRepository<ProductionDema
      * @param productionState 生产需求计划状态
      * @return 是否修改成功
      */
-    @Modifying
-    @Query(value = "UPDATE erp_production_demand SET production_state = ?2 WHERE production_id = ?1", nativeQuery = true)
-    int updateState(String productionId, ProductionDemand.ProductionDemandState productionState);
+//    @Modifying
+//    @Query(value = "UPDATE erp_production_demand SET production_state = ?2 WHERE production_id = ?1", nativeQuery = true)
+//    int updateState(String productionId, ProductionDemand.ProductionDemandState productionState);
 
     /**
      * 根据生产需求计划创建人的用户名查询

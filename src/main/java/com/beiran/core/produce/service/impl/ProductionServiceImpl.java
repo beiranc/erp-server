@@ -173,6 +173,11 @@ public class ProductionServiceImpl implements ProductionService {
         }
         List<ProductionDemandDetail> productionDemandDetails = productionVo.getProductionDetails().stream().map(this::transferDetailVo).collect(Collectors.toList());
 
+        // 设置所属生产需求计划
+        productionDemandDetails.forEach(productionDemandDetail -> {
+            productionDemandDetail.setBelongDemand(save);
+        });
+
         List<ProductionDemandDetail> saveAll = productionDemandDetailRepository.saveAll(productionDemandDetails);
 
         List<ProductionDetailDto> productionDetailDtos = saveAll.stream().map(this::transferDetail).collect(Collectors.toList());
@@ -204,8 +209,9 @@ public class ProductionServiceImpl implements ProductionService {
         operator.setUserId(SecurityUtil.getUserId());
         operator.setUserName(SecurityUtil.getUserName());
         productionDemand.setLastModifiedOperator(operator);
-        update(productionDemand);
-        return productionDemandRepository.updateState(productionId, productionState) > 0;
+        productionDemand.setProductionState(productionState);
+        ProductionDemand update = update(productionDemand);
+        return !Objects.equals(productionDemand,null);
     }
 
     /**
@@ -234,10 +240,11 @@ public class ProductionServiceImpl implements ProductionService {
     public Boolean verifyProduction(String productionId) {
         ProductionDemand productionDemand = findById(productionId);
         // 若不是 CONFIRMED/REPRODUCED 状态，则无法被修改为 VERIFYING 状态
-        if (!Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.CONFIRMED) || !Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.REPRODUCED)) {
+        if (Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.CONFIRMED) || Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.REPRODUCED)) {
+            return updateState(productionId, ProductionDemand.ProductionDemandState.VERIFYING);
+        } else {
             throw new ParameterException("无法被修改");
         }
-        return updateState(productionId, ProductionDemand.ProductionDemandState.VERIFYING);
     }
 
     /**
@@ -300,10 +307,11 @@ public class ProductionServiceImpl implements ProductionService {
     public Boolean closeProduction(String productionId) {
         ProductionDemand productionDemand = findById(productionId);
         // 若不是 CREATED/IMPORTED 状态，则无法被修改为 CLOSED 状态
-        if (!Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.CREATED) || !Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.IMPORTED)) {
+        if (Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.CREATED) || Objects.equals(productionDemand.getProductionState(), ProductionDemand.ProductionDemandState.IMPORTED)) {
+            return updateState(productionId, ProductionDemand.ProductionDemandState.CLOSED);
+        } else {
             throw new ParameterException("无法被修改");
         }
-        return updateState(productionId, ProductionDemand.ProductionDemandState.CLOSED);
     }
 
     /**
@@ -450,6 +458,22 @@ public class ProductionServiceImpl implements ProductionService {
             throw new ParameterException("生产需求计划上一次修改时间不能为空");
         }
         List<ProductionDemand> productionDemands = productionDemandRepository.findByLastModifiedTimeBetween(leftTime, rightTime, pageable);
+        List<ProductionDto> productionDtos =
+                productionDemands.stream()
+                        .map(this::transferProduction)
+                        .collect(Collectors.toList());
+        productionDtos.stream().forEach(productionDto -> {
+            List<ProductionDemandDetail> productionDemandDetails = productionDemandDetailRepository.findByBelongDemand_ProductionId(productionDto.getProductionId(), PageRequest.of(0, 200));
+            List<ProductionDetailDto> productionDetailDtos = productionDemandDetails.stream().map(this::transferDetail).collect(Collectors.toList());
+            productionDto.setProductionDetails(productionDetailDtos);
+        });
+        return productionDtos;
+    }
+
+    @Override
+    public List<ProductionDto> getAllProductions(Pageable pageable) {
+        Page<ProductionDemand> productionDemandPage = findAll(pageable);
+        List<ProductionDemand> productionDemands = productionDemandPage.getContent();
         List<ProductionDto> productionDtos =
                 productionDemands.stream()
                         .map(this::transferProduction)

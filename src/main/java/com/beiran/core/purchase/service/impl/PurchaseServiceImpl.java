@@ -150,8 +150,9 @@ public class PurchaseServiceImpl implements PurchaseService {
         user.setUserId(SecurityUtil.getUserId());
         user.setUserName(SecurityUtil.getUserName());
         purchaseOrder.setLastModifiedOperator(user);
-        update(purchaseOrder);
-        return purchaseOrderRepository.updateState(purchaseId, purchaseOrderState) > 0;
+        purchaseOrder.setPurchaseState(purchaseOrderState);
+        PurchaseOrder update = update(purchaseOrder);
+        return !Objects.equals(update,null);
     }
 
     /**
@@ -161,6 +162,7 @@ public class PurchaseServiceImpl implements PurchaseService {
      * @return 是否修改成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean confirmPurchase(String purchaseId) {
         if (!StringUtils.hasText(purchaseId)) {
             throw new ParameterException("采购计划编号不能为空");
@@ -180,6 +182,7 @@ public class PurchaseServiceImpl implements PurchaseService {
      * @return 是否修改成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean verifyPurchase(String purchaseId) {
         if (!StringUtils.hasText(purchaseId)) {
             throw new ParameterException("采购计划编号不能为空");
@@ -199,6 +202,7 @@ public class PurchaseServiceImpl implements PurchaseService {
      * @return 是否修改成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importPurchase(String purchaseId) {
         // 已入库状态需要将物料存入仓库
         if (!StringUtils.hasText(purchaseId)) {
@@ -235,6 +239,7 @@ public class PurchaseServiceImpl implements PurchaseService {
      * @return 是否修改成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean discussPurchase(String purchaseId) {
         if (!StringUtils.hasText(purchaseId)) {
             throw new ParameterException("采购计划编号不能为空");
@@ -254,16 +259,18 @@ public class PurchaseServiceImpl implements PurchaseService {
      * @return 是否修改成功
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean closePurchase(String purchaseId) {
         if (!StringUtils.hasText(purchaseId)) {
             throw new ParameterException("采购计划编号不能为空");
         }
         // 如果状态不是 CREATED/IMPORTED/DISCUSSING 的采购计划，则无法修改为 CLOSED 状态
         PurchaseOrder purchaseOrder = findById(purchaseId);
-        if (!Objects.equals(purchaseOrder.getPurchaseState(), PurchaseOrder.PurchaseOrderState.CREATED) || !Objects.equals(purchaseOrder.getPurchaseState(), PurchaseOrder.PurchaseOrderState.IMPORTED) || !Objects.equals(purchaseOrder.getPurchaseState(), PurchaseOrder.PurchaseOrderState.DISCUSSING)) {
+        if (Objects.equals(purchaseOrder.getPurchaseState(), PurchaseOrder.PurchaseOrderState.CREATED) || Objects.equals(purchaseOrder.getPurchaseState(), PurchaseOrder.PurchaseOrderState.IMPORTED) || Objects.equals(purchaseOrder.getPurchaseState(), PurchaseOrder.PurchaseOrderState.DISCUSSING)) {
+            return updateState(purchaseId, PurchaseOrder.PurchaseOrderState.CLOSED);
+        } else {
             throw new ParameterException("无法被修改");
         }
-        return updateState(purchaseId, PurchaseOrder.PurchaseOrderState.CLOSED);
     }
 
     /**
@@ -368,6 +375,17 @@ public class PurchaseServiceImpl implements PurchaseService {
             throw new ParameterException("采购计划上一次修改时间不能为空");
         }
         List<PurchaseOrder> purchaseOrders = purchaseOrderRepository.findByLastModifiedTimeBetween(leftTime, rightTime, pageable);
+        List<PurchaseDto> purchaseDtos =
+                purchaseOrders.stream()
+                        .map(this::transferPurchase)
+                        .collect(Collectors.toList());
+        return purchaseDtos;
+    }
+
+    @Override
+    public List<PurchaseDto> getAllPurchases(Pageable pageable) {
+        Page<PurchaseOrder> purchaseOrderPage = findAll(pageable);
+        List<PurchaseOrder> purchaseOrders = purchaseOrderPage.getContent();
         List<PurchaseDto> purchaseDtos =
                 purchaseOrders.stream()
                         .map(this::transferPurchase)

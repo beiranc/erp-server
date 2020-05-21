@@ -113,6 +113,13 @@ public interface PurchaseService extends GenericService<PurchaseOrder, String> {
     List<PurchaseDto> getPurchasesByModifiedTime(Date leftTime, Date rightTime, Pageable pageable);
 
     /**
+     * 获取所有采购计划
+     * @param pageable
+     * @return
+     */
+    List<PurchaseDto> getAllPurchases(Pageable pageable);
+
+    /**
      * 导出指定用户的采购计划
      * @param userName 用户名
      * @param pageable 分页参数
