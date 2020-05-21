@@ -164,6 +164,19 @@ public class SaleController {
     }
 
     /**
+     * 查询所有销售订单
+     * @param pageable
+     * @return
+     */
+    @GetMapping
+    @LogRecord("查询所有销售订单")
+    @PreAuthorize("@erp.check('sale:view') and @erp.check('saleManager')")
+    @ApiOperation("查询所有销售订单")
+    public ResponseModel getAllSales(@PageableDefault Pageable pageable) {
+        return ResponseModel.ok(saleService.getAllSales(pageable));
+    }
+
+    /**
      * 通过用户名查询销售订单
      * @param userName
      * @param pageable

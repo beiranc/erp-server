@@ -22,9 +22,9 @@ public interface SaleOrderRepository extends JpaRepository<SaleOrder, String>, J
      * @param saleState 销售订单状态
      * @return 是否修改成功
      */
-    @Modifying
-    @Query(value = "UPDATE erp_sale_order SET sale_state = ?2 WHERE sale_id = ?1", nativeQuery = true)
-    int updateState(String saleId, SaleOrder.SaleOrderState saleState);
+//    @Modifying
+//    @Query(value = "UPDATE erp_sale_order SET sale_state = ?2 WHERE sale_id = ?1", nativeQuery = true)
+//    int updateState(String saleId, SaleOrder.SaleOrderState saleState);
 
     /**
      * 根据销售订单编号修改销售订单结算方式

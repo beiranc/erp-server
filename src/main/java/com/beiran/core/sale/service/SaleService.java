@@ -114,6 +114,13 @@ public interface SaleService extends GenericService<SaleOrder, String> {
     List<SaleDto> getSalesByModifiedTime(Date leftTime, Date rightTime, Pageable pageable);
 
     /**
+     * 获取所有的销售订单
+     * @param pageable
+     * @return
+     */
+    List<SaleDto> getAllSales(Pageable pageable);
+
+    /**
      * 导出指定用户的销售订单
      * @param userName 用户名
      * @param pageable 分页参数

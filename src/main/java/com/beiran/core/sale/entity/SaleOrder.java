@@ -44,7 +44,7 @@ public class SaleOrder {
     /**
      * 销售订单创建时间
      */
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     @CreationTimestamp
     private Date saleCreateTime;
 

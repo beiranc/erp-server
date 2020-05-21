@@ -93,6 +93,7 @@ public class SaleServiceImpl implements SaleService {
             applicant.setUserId(saleVo.getApplicant().getUserId());
             applicant.setUserName(saleVo.getApplicant().getUserName());
         }
+        saleOrder.setSaleUser(applicant);
         return saleOrder;
     }
 
@@ -161,8 +162,9 @@ public class SaleServiceImpl implements SaleService {
         operator.setUserId(SecurityUtil.getUserId());
         operator.setUserName(SecurityUtil.getUserName());
         saleOrder.setLastModifiedOperator(operator);
-        update(saleOrder);
-        return saleOrderRepository.updateState(saleId, saleState) > 0;
+        saleOrder.setSaleState(saleState);
+        SaleOrder update = update(saleOrder);
+        return !Objects.equals(update,null);
     }
 
     /* 创建 -> 取消/结算
@@ -409,6 +411,22 @@ public class SaleServiceImpl implements SaleService {
             throw new ParameterException("销售订单上一次修改时间不能为空");
         }
         List<SaleOrder> saleOrders = saleOrderRepository.findByLastModifiedTimeBetween(leftTime, rightTime, pageable);
+        List<SaleDto> saleDtos =
+                saleOrders.stream()
+                        .map(this::transferSale)
+                        .collect(Collectors.toList());
+        saleDtos.forEach(saleDto -> {
+            List<SaleOrderDetail> saleOrderDetails = saleOrderDetailRepository.findByBelongOrder_SaleId(saleDto.getSaleId(), PageRequest.of(0, 200));
+            List<SaleDetailDto> saleDetailDtos = saleOrderDetails.stream().map(this::transferDetail).collect(Collectors.toList());
+            saleDto.setSaleDetails(saleDetailDtos);
+        });
+        return saleDtos;
+    }
+
+    @Override
+    public List<SaleDto> getAllSales(Pageable pageable) {
+        Page<SaleOrder> saleOrderPage = findAll(pageable);
+        List<SaleOrder> saleOrders = saleOrderPage.getContent();
         List<SaleDto> saleDtos =
                 saleOrders.stream()
                         .map(this::transferSale)
