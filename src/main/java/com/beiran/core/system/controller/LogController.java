@@ -8,6 +8,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +42,7 @@ public class LogController {
     @LogRecord("查询所有操作日志")
     @PreAuthorize("@erp.check('admin') and @erp.check('system:log:view')")
     @ApiOperation("查询所有操作日志")
-    public ResponseModel queryAll(@PageableDefault Pageable pageable) {
+    public ResponseModel queryAll(@PageableDefault(sort = { "createTime" }, direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseModel.ok(logService.getLogs(pageable));
     }
 
@@ -57,7 +58,7 @@ public class LogController {
     @PreAuthorize("@erp.check('system:log:spec')")
     @ApiOperation("查询特定用户操作日志")
     public ResponseModel querySpec(@RequestParam("userName") String userName,
-                                   @PageableDefault Pageable pageable) {
+                                   @PageableDefault(sort = { "createTime" }, direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseModel.ok(logService.getLogsByName(userName, pageable));
     }
 
@@ -71,7 +72,7 @@ public class LogController {
     @LogRecord("导出所有操作日志")
     @PreAuthorize("@erp.check('admin') and @erp.check('system:log:export')")
     @ApiOperation("导出所有操作日志")
-    public void exportAll(@PageableDefault(size = 200) Pageable pageable,
+    public void exportAll(@PageableDefault(size = 200, sort = { "createTime" }, direction = Sort.Direction.DESC) Pageable pageable,
                                    HttpServletResponse response) throws Exception {
         File file = logService.createLogsExcelFile(pageable);
         FileUtils.downloadFile(response, file, file.getName());
@@ -89,7 +90,7 @@ public class LogController {
     @PreAuthorize("@erp.check('admin') and @erp.check('system:log:export')")
     @ApiOperation("导出特定用户操作日志")
     public void exportSpec(@RequestParam("userName") String userName,
-                           @PageableDefault(size = 200) Pageable pageable,
+                           @PageableDefault(size = 200, sort = { "createTime" }, direction = Sort.Direction.DESC) Pageable pageable,
                            HttpServletResponse response) throws Exception {
         File file = logService.createSpecLogsExcelFileByName(userName, pageable);
         FileUtils.downloadFile(response, file, file.getName());

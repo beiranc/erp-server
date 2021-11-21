@@ -6,10 +6,9 @@ import com.beiran.common.utils.FileUtils;
 import com.beiran.core.system.entity.Log;
 import com.beiran.core.system.repository.LogRepository;
 import com.beiran.core.system.service.LogService;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -94,10 +93,10 @@ public class LogServiceImpl implements LogService {
      * @return File
      */
     private File createExcelFile(List<Log> logs) {
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet();
+        SXSSFWorkbook workbook = new SXSSFWorkbook();
+        SXSSFSheet sheet = workbook.createSheet();
         // 创建头信息
-        Row rowInfo = sheet.createRow(0);
+        SXSSFRow rowInfo = sheet.createRow(0);
         int columnIndex = 0;
         rowInfo.createCell(columnIndex).setCellValue("No");
         rowInfo.createCell(++columnIndex).setCellValue("日志编号");
@@ -111,7 +110,7 @@ public class LogServiceImpl implements LogService {
 
         for (int i = 0; i < logs.size(); i++) {
             Log log = logs.get(i);
-            Row row = sheet.createRow(i + 1);
+            SXSSFRow row = sheet.createRow(i + 1);
             for (int j = 0; j < columnIndex + 1; j++) {
                 row.createCell(j);
             }

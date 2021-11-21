@@ -25,11 +25,6 @@ public class CommonConfig {
     public static String apiVersion;
 
     /**
-     * 从 request 中获取用户输入验证码的 key
-     */
-    public static String kaptchaName;
-
-    /**
      * Redis 中验证码 key
      */
     public static String codeKey;
@@ -40,10 +35,6 @@ public class CommonConfig {
 
     public void setApiVersion(String apiVersion) {
         this.apiVersion = apiVersion;
-    }
-
-    public void setKaptchaName(String kaptchaName) {
-        this.kaptchaName = kaptchaName;
     }
 
     public void setLogoutUrl(String logoutUrl) {

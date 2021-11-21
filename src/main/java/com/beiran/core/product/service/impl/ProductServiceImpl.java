@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -82,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Product save(Product entity) {
         // 产品新增无需判断是否已存在
         if (Objects.equals(entity, null)) {
@@ -91,6 +93,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAll(List<Product> entities) {
         if (Objects.equals(entities, null) || entities.isEmpty()) {
             throw new ParameterException("需要删除的产品不能为空");
@@ -99,6 +102,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Product update(Product entity) {
         if (Objects.equals(entity, null)) {
             throw new ParameterException("需要修改的产品不能为空");

@@ -7,18 +7,17 @@ import com.beiran.common.utils.DateTimeUtils;
 import com.beiran.common.utils.FileUtils;
 import com.beiran.common.utils.transfer.UserTransferUtils;
 import com.beiran.core.system.dto.UserDto;
-import com.beiran.core.system.entity.Dept;
 import com.beiran.core.system.entity.Role;
 import com.beiran.core.system.entity.User;
 import com.beiran.core.system.repository.UserRepository;
 import com.beiran.core.system.service.UserService;
 import com.beiran.core.system.vo.UserPartVo;
 import com.beiran.core.system.vo.UserVo;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,13 +32,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service("userService")
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public UserDto createUser(UserVo userVo) {

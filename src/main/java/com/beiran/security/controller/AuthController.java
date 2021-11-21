@@ -10,30 +10,25 @@ import com.beiran.security.entity.AuthUser;
 import com.beiran.security.entity.SecurityUserDetails;
 import com.beiran.security.utils.JWTTokenUtil;
 import com.beiran.security.utils.SecurityUtil;
-import com.google.code.kaptcha.Constants;
-import com.google.code.kaptcha.Producer;
+import com.wf.captcha.ArithmeticCaptcha;
+import com.wf.captcha.base.Captcha;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.awt.*;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -46,75 +41,68 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/api/v1/auth")
 @Api(tags = "系统认证")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private Producer producer;
+    private final UserService userService;
+    private final UserDetailsService userDetailsService;
+    private final RedisUtils redisUtils;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private RedisUtils redisUtils;
-
-    @Autowired
-    private AuthenticationManagerBuilder authenticationManagerBuilder;
+    // 创建验证码时用到的第一段 Key
+    private static final String CAPTCHA_KEY = "ERP_CAPTCHA_KEY";
 
     /**
-     * 验证码，使用 base64 编码进行输出
-     * @param response
-     * @return
+     * EasyCaptcha验证码，使用 base64 编码进行输出
+     * @return ResponseModel
      */
     @GetMapping("/code")
     @ApiOperation("获取验证码")
-    public ResponseModel validCode(HttpServletResponse response) {
+    public ResponseModel easyValidCode(HttpServletResponse response) {
         response.setDateHeader("Expires", 0);
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
         response.addHeader("Cache-Control", "post-check=0, pre-check=0");
         response.setHeader("Pragma", "no-cache");
         response.setContentType("image/jpeg");
 
-        // 生成文字验证码
-        String text = producer.createText();
-
-        // 生成图片验证码
-        BufferedImage bufferedImage = producer.createImage(text);
+        // 创建算术类型验证码
+        ArithmeticCaptcha captcha = new ArithmeticCaptcha(111, 36);
+        // 几位数运算
+        captcha.setLen(2);
+        // 设置验证码字体
+        try {
+            captcha.setFont(Captcha.FONT_1);
+        } catch (IOException | FontFormatException e) {
+            log.error("{ 设置验证码字体失败 }" + e);
+        }
+        // 运算的公式: 32+2=?
+        String arithmeticString = captcha.getArithmeticString();
+        // 运算结果
+        String text = captcha.text();
 
         // 输出 Base64 字符串
-        String base64String = "";
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            ImageIO.write(bufferedImage, "jpg", byteArrayOutputStream);
+        String base64String = captcha.toBase64();
 
-            byte[] bytes = byteArrayOutputStream.toByteArray();
-            Base64.Encoder encoder = Base64.getEncoder();
-            base64String = encoder.encodeToString(bytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // 将 KAPTCHA_SESSION_KEY 作为第一段
-        String keyUUID = UUID.nameUUIDFromBytes(Constants.KAPTCHA_SESSION_KEY.getBytes()).toString().toLowerCase().replaceAll("-", "");
+        // 将 CAPTCHA_KEY 作为第一段
+        String keyUUID = UUID.nameUUIDFromBytes(CAPTCHA_KEY.getBytes()).toString().toLowerCase().replaceAll("-", "");
         // 将 Base64 编码后的验证码作为第二段
         String imgUUID = UUID.nameUUIDFromBytes(base64String.getBytes()).toString().toLowerCase().replaceAll("-", "");
         // 结合 keyUUID 与 imgUUID 生成当前验证码的 key
         String imgKey = UUID.nameUUIDFromBytes((keyUUID + imgUUID).getBytes()).toString().toLowerCase().replaceAll("-", "");
 
         log.info(" { codeKey } " + imgKey);
-        log.info(" { 保存的验证码 } " + text);
+        log.info(" { 验证码公式 } " + arithmeticString);
+        log.info(" { 运算结果 } " + text);
 
         // 保存到 Redis, 设置 2 分钟过期
         redisUtils.set(imgKey, text, 2, TimeUnit.MINUTES);
 
         // Note: data 为 imgKey, url 为 Base64 编码后的验证码图片
-        return ResponseModel.ok(HttpStatus.OK.value(), null, imgKey, "data:image/jpeg;base64," + base64String);
+        return ResponseModel.ok(HttpStatus.OK.value(), null, imgKey, base64String);
     }
 
     /**
      * 获取用户信息
-     * @return
      */
     @GetMapping("/info")
     @ApiOperation("获取用户信息")
@@ -126,8 +114,8 @@ public class AuthController {
 
     /**
      * 登录
-     * @param authUser
-     * @return
+     * @param authUser 用户信息
+     * @return ResponseModel
      */
     @PostMapping("/login")
     @ApiOperation("用户登录")
@@ -147,12 +135,12 @@ public class AuthController {
             return ResponseModel.error(HttpStatus.BAD_REQUEST.value(), "验证码错误", null, null);
         }
 
-//        UserDto user = userService.getUserByName(authUser.getUsername());
-//        if (!Objects.equals(user,null)) {
-//            if (Objects.equals(user.getState(), User.UserState.DISABLED.getValue())) {
-//                return ResponseModel.error("当前用户已停用，请联系管理员", null);
-//            }
-//        }
+        UserDto user = userService.getUserByName(authUser.getUsername());
+        if (!Objects.equals(user,null)) {
+            if (Objects.equals(user.getState(), User.UserState.DISABLED.getValue())) {
+                return ResponseModel.error("当前用户已停用，请联系管理员", null);
+            }
+        }
 
         // 执行登录
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(authUser.getUsername(), authUser.getPassword());
@@ -176,7 +164,7 @@ public class AuthController {
 
     /**
      * 登出
-     * @return
+     * @return ResponseModel
      */
     @DeleteMapping("/logout")
     @ApiOperation("用户登出")

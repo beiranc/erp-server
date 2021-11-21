@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     private ProductCategoryRepository productCategoryRepository;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ProductCategory save(ProductCategory entity) {
         if (Objects.equals(entity, null)) {
             throw new ParameterException("需要保存的产品分类不能为空");
@@ -33,6 +35,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAll(List<ProductCategory> entities) {
         if (Objects.equals(entities, null) || entities.isEmpty()) {
             throw new ParameterException("需要删除的产品分类不能为空");
@@ -41,6 +44,7 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ProductCategory update(ProductCategory entity) {
         if (Objects.equals(entity, null)) {
             throw new ParameterException("需要修改的产品分类不能为空");

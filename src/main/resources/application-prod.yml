@@ -6,7 +6,7 @@ spring:
   datasource:
     username: beiran
     password: 123456
-    url: jdbc:mysql://127.0.0.1:3306/erp-server?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false
+    url: jdbc:mysql://127.0.0.1:3306/erp-server?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: false
@@ -25,12 +25,19 @@ spring:
   redis:
     host: 127.0.0.1
     timeout: 5000
+  # 上传文件配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 1024MB
+      max-request-size: 1024MB
 
 # 配置服务器相关
 server:
   port: 9001
   compression:
     enabled: true
+    min-response-size: 1024
   forward-headers-strategy: FRAMEWORK
 
 # JWT 配置
@@ -47,5 +54,20 @@ common:
   login-url: /api/v1/auth/login
   logout-url: /api/v1/auth/logout
   api-version: /api/v1
-  kaptcha-name: kaptcha
   code-key: codeKey
+
+# 凤凰配置
+phoenix:
+  chinese-name: 上海鳳凰進出口有限公司
+  english-name: SHANGHAI PHOENIX IMP.&EXP.CO.,LTD
+  address: Phoenix Centre,Building#6,518 Fuquan(N)Rd,Changning District,Shanghai 200335
+  official-website: http://www.phoenix-bicycle.com
+  custom:
+    logo: true
+    outer-packing: true
+    design: true
+
+# 外部 API 相关配置
+external:
+  app-key: d36a08809a78866c
+  rate-url: https://api.jisuapi.com/exchange/convert
