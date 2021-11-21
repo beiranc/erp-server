@@ -25,6 +25,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.awt.*;
@@ -45,8 +46,12 @@ import java.util.concurrent.TimeUnit;
 public class AuthController {
 
     private final UserService userService;
-    private final UserDetailsService userDetailsService;
     private final RedisUtils redisUtils;
+
+    @Resource
+    private UserDetailsService userDetailsService;
+
+    @Resource
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     // 创建验证码时用到的第一段 Key
