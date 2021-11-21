@@ -103,7 +103,7 @@ public class RedisUtils {
             cursor.next();
         }
         try {
-            RedisConnectionUtils.releaseConnection(rc, factory);
+            RedisConnectionUtils.releaseConnection(rc, factory, true);
         } catch (Exception e) {
             e.printStackTrace();
         }
