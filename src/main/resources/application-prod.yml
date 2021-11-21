@@ -5,7 +5,7 @@ debug: false
 spring:
   datasource:
     username: beiran
-    password: 123456
+    password: wasd1429123035
     url: jdbc:mysql://127.0.0.1:3306/erp-server?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
