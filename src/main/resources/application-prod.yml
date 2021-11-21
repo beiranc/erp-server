@@ -9,9 +9,9 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/erp-server?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
-    show-sql: false
+    show-sql: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
   # 配置 Spring MVC 相关属性
   mvc:
     date-format: yyyy-MM-dd HH:mm:ss
