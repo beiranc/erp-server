@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneId;
@@ -37,14 +38,14 @@ public class FileUtils {
 	 */
 	public static void downloadFile(HttpServletResponse response, File file, String newFileName) throws Exception {
 		try {
-			response.setHeader("Content-Disposition", "attachment; filename=" + new String(newFileName.getBytes("ISO-8859-1"), "UTF-8"));
-			response.setHeader("FileName", new String(newFileName.getBytes("ISO-8859-1"), "UTF-8"));
+			response.setHeader("Content-Disposition", "attachment; filename=" + new String(newFileName.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
+			response.setHeader("FileName", new String(newFileName.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8));
 			response.setHeader("Access-Control-Expose-Headers", "FileName");
 			BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(response.getOutputStream());
 			InputStream inputStream = new FileInputStream(file.getAbsolutePath());
 			BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
 			int length = 0;
-			byte[] temp = new byte[1 * 1024 * 10];
+			byte[] temp = new byte[1024 * 10];
 			while ((length = bufferedInputStream.read(temp)) != -1) {
 				bufferedOutputStream.write(temp, 0, length);
 			}
@@ -70,13 +71,12 @@ public class FileUtils {
 			file = File.createTempFile(fileName, ".xlsx");
 			stream = new FileOutputStream(file.getAbsoluteFile());
 			workbook.write(stream);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
 				workbook.close();
+				assert stream != null;
 				stream.close();
 			} catch (IOException e) {
 				e.printStackTrace();

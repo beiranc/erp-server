@@ -39,7 +39,6 @@ public class LogController {
      * @return 返回带分页属性的数据
      */
     @GetMapping
-    @LogRecord("查询所有操作日志")
     @PreAuthorize("@erp.check('admin') and @erp.check('system:log:view')")
     @ApiOperation("查询所有操作日志")
     public ResponseModel queryAll(@PageableDefault(sort = { "createTime" }, direction = Sort.Direction.DESC) Pageable pageable) {
@@ -54,7 +53,6 @@ public class LogController {
      * @return
      */
     @GetMapping("/user_name")
-    @LogRecord("查询特定用户操作日志")
     @PreAuthorize("@erp.check('system:log:spec')")
     @ApiOperation("查询特定用户操作日志")
     public ResponseModel querySpec(@RequestParam("userName") String userName,

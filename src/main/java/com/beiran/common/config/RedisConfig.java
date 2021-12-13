@@ -1,8 +1,6 @@
 package com.beiran.common.config;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.parser.ParserConfig;
-import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -45,14 +43,14 @@ public class RedisConfig extends CachingConfigurerSupport {
     /**
      * 设置 Redis 数据默认过期时间，默认 2 小时
      * 设置 @Cacheable 序列化方式
-     * @return
+     * @return RedisCacheConfiguration
      */
     @Bean
     public RedisCacheConfiguration redisCacheConfiguration() {
-        // 使用 FastJsonRedisSerializer 的方式序列化
-        FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
+        // 使用 GsonRedisSerializer 的方式序列化
+        GsonRedisSerializer<Object> gsonRedisSerializer = new GsonRedisSerializer<>(Object.class);
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig();
-        redisCacheConfiguration = redisCacheConfiguration.serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(fastJsonRedisSerializer));
+        redisCacheConfiguration = redisCacheConfiguration.serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(gsonRedisSerializer));
         return redisCacheConfiguration;
     }
 
@@ -60,25 +58,20 @@ public class RedisConfig extends CachingConfigurerSupport {
     @ConditionalOnMissingBean(name = "redisTemplate")
     public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
-        // value 采取 FastJsonRedisSerializer 的方式序列化
-        FastJsonRedisSerializer<Object> fastJsonRedisSerializer = new FastJsonRedisSerializer<>(Object.class);
-        redisTemplate.setValueSerializer(fastJsonRedisSerializer);
-        redisTemplate.setHashValueSerializer(fastJsonRedisSerializer);
-        // 全局开启 AutoType
-        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
-        // 官方建议使用小范围指定 AutoType 白名单的方式
-        // ParserConfig.getGlobalInstance().addAccept("com.beiran");
+        // value 采取 GsonRedisSerializer 的方式序列化
+        GsonRedisSerializer<Object> gsonRedisSerializer = new GsonRedisSerializer<>(Object.class);
+        redisTemplate.setValueSerializer(gsonRedisSerializer);
+        redisTemplate.setHashValueSerializer(gsonRedisSerializer);
         // key 采取自定义的 StringRedisSerializer 的方式序列化
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
     }
 
     /**
      * 自定义缓存 key 生成策略
-     * @return
+     * @return KeyGenerator
      */
     @Bean
     @Override
@@ -97,7 +90,7 @@ public class RedisConfig extends CachingConfigurerSupport {
                 container.put(String.valueOf(i), params[i]);
             }
             // 转为 JSON 字符串
-            String json = JSON.toJSONString(container);
+            String json = new Gson().toJson(container);
             // 做 SHA256 Hash 计算
             return DigestUtils.sha256Hex(json);
         };
@@ -105,7 +98,7 @@ public class RedisConfig extends CachingConfigurerSupport {
 
     /**
      * 异常处理，当 Redis 发生异常时，仅打印日志
-     * @return
+     * @return CacheErrorHandler
      */
     @Bean
     @Override
@@ -136,16 +129,19 @@ public class RedisConfig extends CachingConfigurerSupport {
 }
 
 /**
- * Value 序列化
+ * Value 序列化, 采用 Gson
  * @param <T>
  */
-class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
+class GsonRedisSerializer<T> implements RedisSerializer<T> {
 
-    private Class<T> clazz;
+    private final Class<T> clazz;
 
-    FastJsonRedisSerializer(Class<T> clazz) {
+    private final Gson gson;
+
+    GsonRedisSerializer(Class<T> clazz) {
         super();
         this.clazz = clazz;
+        this.gson = new Gson();
     }
 
     @Override
@@ -153,7 +149,7 @@ class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
         if (t == null) {
             return new byte[0];
         }
-        return JSON.toJSONString(t, SerializerFeature.WriteClassName).getBytes(StandardCharsets.UTF_8);
+        return gson.toJson(t, clazz).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -161,8 +157,7 @@ class FastJsonRedisSerializer<T> implements RedisSerializer<T> {
         if (bytes == null || bytes.length <= 0) {
             return null;
         }
-        String string = new String(bytes, StandardCharsets.UTF_8);
-        return JSON.parseObject(string, clazz);
+        return gson.fromJson(new String(bytes, StandardCharsets.UTF_8), clazz);
     }
 }
 
@@ -173,8 +168,11 @@ class StringRedisSerializer implements RedisSerializer<Object> {
 
     private final Charset charset;
 
+    private Gson gson;
+
     StringRedisSerializer() {
         this(StandardCharsets.UTF_8);
+        this.gson = new Gson();
     }
 
     public StringRedisSerializer(Charset charset) {
@@ -184,7 +182,7 @@ class StringRedisSerializer implements RedisSerializer<Object> {
 
     @Override
     public byte[] serialize(Object o) throws SerializationException {
-        String string = JSON.toJSONString(o);
+        String string = gson.toJson(o);
         if (StringUtils.isBlank(string)) {
             return null;
         }

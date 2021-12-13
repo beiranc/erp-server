@@ -1,15 +1,11 @@
 package com.beiran.security.service;
 
-import com.beiran.common.utils.transfer.UserTransferUtils;
-import com.beiran.core.system.dto.UserDto;
-import com.beiran.core.system.entity.Job;
 import com.beiran.core.system.entity.Permission;
 import com.beiran.core.system.entity.Role;
 import com.beiran.core.system.entity.User;
 import com.beiran.core.system.repository.JobRepository;
 import com.beiran.core.system.repository.PermissionRepository;
 import com.beiran.core.system.repository.UserRepository;
-import com.beiran.core.system.service.UserService;
 import com.beiran.security.entity.SecurityUserDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -64,7 +60,7 @@ public class SecurityUserDetailsService implements UserDetailsService {
         // 用户所拥有的所有权限
         Set<Permission> permissions = new HashSet<>();
         Set<String> roleIds = user.getUserRoles().stream().map(Role::getRoleId).collect(Collectors.toSet());
-        roleIds.stream().forEach(roleId -> {
+        roleIds.forEach(roleId -> {
             Set<Permission> rolePermissions = permissionRepository.findByPermissionRoles_RoleId(roleId);
             permissions.addAll(rolePermissions);
         });

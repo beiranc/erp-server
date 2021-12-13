@@ -1,8 +1,9 @@
 package com.beiran.security.filter;
 
-import com.alibaba.fastjson.JSON;
 import com.beiran.security.config.JWTConfig;
 import com.beiran.security.entity.SecurityUserDetails;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -69,15 +70,15 @@ public class JWTAuthenticationTokenFilter extends BasicAuthenticationFilter {
                     // 如果它不为空
                     if (!StringUtils.isEmpty(authority)) {
                         // 解析 JSON 格式的权限字符串
-                        List<Map<String, String>> maps = (List<Map<String, String>>) JSON.parse(authority);
+                        List<Map<String, String>> maps = new Gson().fromJson(authority, new TypeToken<List<Map<String, String>>>() {}.getType());
                         // 遍历权限
-                        maps.stream().forEach(grantedAuthority -> {
+                        maps.forEach(grantedAuthority -> {
                             // 如果不为空则取出其中的每一个 GrantedAuthority 存入 authorities
                             if (!StringUtils.isEmpty(grantedAuthority)) {
-                                authorities.add(new SimpleGrantedAuthority("" + grantedAuthority.get("authority")));
+                                authorities.add(new SimpleGrantedAuthority("" + grantedAuthority.get("role")));
                             }
                         });
-                        log.info( " { GrantedAuthority 数据 } " + maps.toString());
+                        log.info( " { GrantedAuthority 数据 } " + maps);
                     }
 
                     // 放置数据到 Spring Security 安全实体中
@@ -99,6 +100,5 @@ public class JWTAuthenticationTokenFilter extends BasicAuthenticationFilter {
         }
 
         chain.doFilter(request, response);
-        return;
     }
 }

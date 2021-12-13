@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -35,7 +36,7 @@ import java.util.Objects;
 @Aspect
 public class LogAspect {
 
-    @Autowired
+    @Resource
     private LogService logService;
 
     /**
@@ -52,7 +53,7 @@ public class LogAspect {
     /**
      * 配置环绕通知
      * @param joinPoint 连接点
-     * @return
+     * @return Object
      */
     @Around("logPointCut()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -91,7 +92,7 @@ public class LogAspect {
         if (!Objects.equals(argValues, null)) {
             for (int i = 0; i < argValues.length; i++) {
                 // 记录创建用户的日志时需要将密码隐藏掉
-                if (Objects.equals(argNames[i].toString(), "loginPassword")) {
+                if (Objects.equals(argNames[i], "loginPassword")) {
                     paramsInfo.append(" ").append(argNames[i]).append(": ").append("*********");
                 } else {
                     paramsInfo.append(" ").append(argNames[i]).append(": ").append(argValues[i]);
@@ -109,7 +110,7 @@ public class LogAspect {
         userLog.setCreateTime(new Date());
         userLog.setIp(getIp(request));
         userLog.setMethod(methodInfo.toString());
-        userLog.setParams(paramsInfo.toString() + " }");
+        userLog.setParams(paramsInfo + " }");
         userLog.setSpendTime(System.currentTimeMillis() - currentTime.get());
         logService.save(userLog);
         return result;
@@ -152,7 +153,7 @@ public class LogAspect {
         if (!Objects.equals(argValues, null)) {
             for (int i = 0; i < argValues.length; i++) {
                 // 记录创建用户的日志时需要将密码隐藏掉
-                if (Objects.equals(argNames[i].toString(), "loginPassword")) {
+                if (Objects.equals(argNames[i], "loginPassword")) {
                     paramsInfo.append(" ").append(argNames[i]).append(": ").append("*********");
                 } else {
                     paramsInfo.append(" ").append(argNames[i]).append(": ").append(argValues[i]);
@@ -168,7 +169,7 @@ public class LogAspect {
         userLog.setCreateTime(new Date());
         userLog.setIp(getIp(request));
         userLog.setMethod(methodInfo.toString());
-        userLog.setParams(paramsInfo.toString() + " }");
+        userLog.setParams(paramsInfo + " }");
         userLog.setParams(Arrays.asList(joinPoint.getArgs()).toString());
         logService.save(userLog);
         log.error(" { 其他异常 } " + exception.getLocalizedMessage());
@@ -176,8 +177,6 @@ public class LogAspect {
 
     /**
      * 获取 IP 地址
-     * @param request
-     * @return
      */
     private static String getIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");

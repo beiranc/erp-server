@@ -106,7 +106,7 @@ public class RoleTransferUtils {
         }
         Set<Permission> permissions = new HashSet<>();
         if (!roleVo.getPermissionIds().isEmpty() && !Objects.equals(roleVo.getPermissionIds(), null)) {
-            roleVo.getPermissionIds().stream().forEach(permissionId -> {
+            roleVo.getPermissionIds().forEach(permissionId -> {
                 Permission permission = new Permission();
                 permission.setPermissionId(permissionId);
                 permissions.add(permission);

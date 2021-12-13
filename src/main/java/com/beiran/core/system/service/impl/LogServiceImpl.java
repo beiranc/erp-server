@@ -9,18 +9,18 @@ import com.beiran.core.system.service.LogService;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * LogService 接口的实现类<br>
@@ -29,7 +29,7 @@ import java.util.Objects;
 @Service("logService")
 public class LogServiceImpl implements LogService {
 
-    @Autowired
+    @Resource
     private LogRepository logRepository;
 
     @Override
@@ -71,7 +71,7 @@ public class LogServiceImpl implements LogService {
     public File createSpecLogsExcelFileByName(String userName, Pageable pageable) {
         Page<Log> logPage = getLogsByName(userName, pageable);
         List<Log> logs = logPage.getContent();
-        if (Objects.equals(logs, null) || logs.isEmpty()) {
+        if (CollectionUtils.isEmpty(logs)) {
             logs = new ArrayList<>();
         }
         return createExcelFile(logs);
@@ -81,7 +81,7 @@ public class LogServiceImpl implements LogService {
     public File createLogsExcelFile(Pageable pageable) {
         Page<Log> logPage = getLogs(pageable);
         List<Log> logs = logPage.getContent();
-        if (Objects.equals(logs, null) || logs.isEmpty()) {
+        if (CollectionUtils.isEmpty(logs)) {
             logs = new ArrayList<>();
         }
         return createExcelFile(logs);

@@ -1,8 +1,8 @@
 package com.beiran.security.utils;
 
-import com.alibaba.fastjson.JSON;
 import com.beiran.security.config.JWTConfig;
 import com.beiran.security.entity.SecurityUserDetails;
+import com.google.gson.Gson;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class JWTTokenUtil {
      */
     public static String createAccessToken(SecurityUserDetails securityUserDetails) {
         // 登录成功生成 Token
-        String token = null;
+        String token;
         token = Jwts.builder()
                 // 向 token 中放入用户 ID
                 .setId(securityUserDetails.getUserId() + "")
@@ -38,7 +38,7 @@ public class JWTTokenUtil {
                 // 签发人
                 .setIssuer("erp")
                 // 自定义属性，这里将用户拥有的权限放入
-                .claim("authorities", JSON.toJSONString(securityUserDetails.getAuthorities()))
+                .claim("authorities", new Gson().toJson(securityUserDetails.getAuthorities()))
                 // 设置过期时间
                 .setExpiration(new Date(System.currentTimeMillis() + JWTConfig.expiration))
                 // 设置签名算法和密钥

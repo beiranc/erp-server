@@ -51,7 +51,7 @@ public class SwaggerConfig {
 	private ApiInfo apiInfo() {
 		return new ApiInfoBuilder()
 				.title("ERP-SERVER 接口文档")
-				.version("1.0.0")
+				.version("1.1.0")
 				.build();
 	}
 }
