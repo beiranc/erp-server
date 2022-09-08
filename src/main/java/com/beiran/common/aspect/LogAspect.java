@@ -12,7 +12,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -30,7 +29,6 @@ import java.util.Objects;
  * 日志切面
  * FIXME: 日志信息可以抽象成一个方法
  */
-
 @Slf4j
 @Component
 @Aspect
@@ -59,58 +57,10 @@ public class LogAspect {
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         currentTime.set(System.currentTimeMillis());
         Log userLog = new Log();
-        Object result = null;
-
-        // 获取 HttpServletRequest 中的信息
-        HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
-
-        // 获取方法
-        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
-        Method method = methodSignature.getMethod();
-
-        // 获取方法上的注解
-        LogRecord logRecord = method.getAnnotation(LogRecord.class);
-
-        // 拼接日志所需的方法信息
-        StringBuilder methodInfo = new StringBuilder();
-        methodInfo.append(joinPoint.getTarget().getClass().getName());
-        methodInfo.append(".");
-        methodInfo.append(methodSignature.getName());
-        methodInfo.append("()");
-
-        // 拼接日志所需的方法参数信息
-        StringBuilder paramsInfo = new StringBuilder();
-        paramsInfo.append("{");
-
-        // 参数值
-        Object[] argValues = joinPoint.getArgs();
-
-        // 参数名
-        String[] argNames = methodSignature.getParameterNames();
-
-        // 拼接方法参数
-        if (!Objects.equals(argValues, null)) {
-            for (int i = 0; i < argValues.length; i++) {
-                // 记录创建用户的日志时需要将密码隐藏掉
-                if (Objects.equals(argNames[i], "loginPassword")) {
-                    paramsInfo.append(" ").append(argNames[i]).append(": ").append("*********");
-                } else {
-                    paramsInfo.append(" ").append(argNames[i]).append(": ").append(argValues[i]);
-                }
-            }
-        }
-
-        // 从 Spring Security 的上下文中获取当前登录的用户名
-        String userName = SecurityUtil.getUserName();
-
+        Object result;
+        common(joinPoint, userLog, false);
         // 记录日志
         result = joinPoint.proceed();
-        userLog.setUserName(userName);
-        userLog.setOperation(logRecord.value());
-        userLog.setCreateTime(new Date());
-        userLog.setIp(getIp(request));
-        userLog.setMethod(methodInfo.toString());
-        userLog.setParams(paramsInfo + " }");
         userLog.setSpendTime(System.currentTimeMillis() - currentTime.get());
         logService.save(userLog);
         return result;
@@ -121,7 +71,12 @@ public class LogAspect {
         Log userLog = new Log();
         userLog.setSpendTime(System.currentTimeMillis() - currentTime.get());
         currentTime.remove();
+        common(joinPoint, userLog, true);
+        logService.save(userLog);
+        log.error(" { 其他异常 } " + exception.getLocalizedMessage());
+    }
 
+    private void common(JoinPoint joinPoint, Log userLog, Boolean isThrowing) {
         // 获取 HttpServletRequest 中的信息
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
 
@@ -131,13 +86,6 @@ public class LogAspect {
 
         // 获取方法上的注解
         LogRecord logRecord = method.getAnnotation(LogRecord.class);
-
-        // 拼接日志所需的方法信息
-        StringBuilder methodInfo = new StringBuilder();
-        methodInfo.append(joinPoint.getTarget().getClass().getName());
-        methodInfo.append(".");
-        methodInfo.append(methodSignature.getName());
-        methodInfo.append("()");
 
         // 拼接日志所需的方法参数信息
         StringBuilder paramsInfo = new StringBuilder();
@@ -165,14 +113,17 @@ public class LogAspect {
         String userName = SecurityUtil.getUserName();
 
         userLog.setUserName(userName);
-        userLog.setOperation("{ 异常操作 } : " + logRecord.value());
+        userLog.setOperation(isThrowing ? "{ 异常操作 } : " + logRecord.value() : logRecord.value());
         userLog.setCreateTime(new Date());
         userLog.setIp(getIp(request));
-        userLog.setMethod(methodInfo.toString());
+        // 拼接日志所需的方法信息
+        String methodInfo = joinPoint.getTarget().getClass().getName() +
+                "." +
+                methodSignature.getName() +
+                "()";
+        userLog.setMethod(methodInfo);
         userLog.setParams(paramsInfo + " }");
         userLog.setParams(Arrays.asList(joinPoint.getArgs()).toString());
-        logService.save(userLog);
-        log.error(" { 其他异常 } " + exception.getLocalizedMessage());
     }
 
     /**
