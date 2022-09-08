@@ -4,9 +4,6 @@ debug: false
 # 配置数据源及 JPA 相关
 spring:
   datasource:
-    username: root
-    password: 123456
-    url: jdbc:mysql://beiran.icu:3306/erp-server-dev?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&allowPublicKeyRetrieval=true&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: true
@@ -23,10 +20,7 @@ spring:
     time-zone: GMT+8
   # Redis 配置
   redis:
-    host: beiran.icu
     timeout: 5000
-    port: 6820
-    password: beiranc
   # 上传文件配置
   servlet:
     multipart:
@@ -45,7 +39,7 @@ server:
 # JWT 配置
 jwt:
   # 密钥 KEY
-  secret: 7196371f9fa2480696c74b152732cac1
+  secret: ${jwt-secret:7196371f9fa2480696c74b152732cac1}
   token-header: Authorization
   token-prefix: ERP-
   expiration: 86400
@@ -60,10 +54,10 @@ common:
 
 # 凤凰配置
 phoenix:
-  chinese-name: 上海鳳凰進出口有限公司
-  english-name: SHANGHAI PHOENIX IMP.&EXP.CO.,LTD
-  address: Phoenix Centre,Building#6,518 Fuquan(N)Rd,Changning District,Shanghai 200335
-  official-website: http://www.phoenix-bicycle.com
+  chinese-name: ${chinese-name}
+  english-name: ${english-name}
+  address: ${address}
+  official-website: ${official-website}
   custom:
     logo: true
     outer-packing: true
@@ -71,5 +65,5 @@ phoenix:
 
 # 外部 API 相关配置
 external:
-  app-key: d36a08809a78866c
-  rate-url: https://api.jisuapi.com/exchange/convert
+  app-key: ${app-key}
+  rate-url: ${rate-url}
